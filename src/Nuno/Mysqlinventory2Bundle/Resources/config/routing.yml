@@ -1,0 +1,5 @@
+NunoMysqlinventory2Bundle_homepage:
+    path:  /
+    defaults: { _controller: NunoMysqlinventory2Bundle:Page:index }
+    requirements:
+        _method:  GET

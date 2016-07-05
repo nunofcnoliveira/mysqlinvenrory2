@@ -1,0 +1,3 @@
+nuno_mysqlinventory2:
+    resource: "@NunoMysqlinventory2Bundle/Resources/config/routing.yml"
+    prefix:   /

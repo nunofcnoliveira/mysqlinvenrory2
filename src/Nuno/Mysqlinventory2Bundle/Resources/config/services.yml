@@ -1,0 +1,4 @@
+services:
+#    nuno_mysqlinventory2.example:
+#        class: Nuno\Mysqlinventory2Bundle\Example
+#        arguments: ["@service_id", "plain_value", %parameter%]

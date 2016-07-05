@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+	<title>MySQL Inventory 2</title>
+
+	<!-- Bootstrap -->
+	{% stylesheets '@NunoMysqlinventory2Bundle/Resources/public/css/bootstrap.min.css' filter='cssrewrite' %}
+		<link rel="stylesheet" href="{{ asset_url }}" />
+	{% endstylesheets %}
+
+	{% javascripts
+		'@NunoMysqlinventory2Bundle/Resources/public/js/jquery-2.2.0.min.js'
+		'@NunoMysqlinventory2Bundle/Resources/public/js/bootstrap.min.js'
+	%}
+		<script src="{{ asset_url }}"></script>
+	{% endjavascripts %}
+	
+	<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v=2" />
+	<!-- <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" /> -->
+	
+	<style>
+		#audiowide a { font-family: 'Audiowide', serif; font-size: 48px; color: #8B0000; text-decoration:none; }
+		#dosis, #dosis a { font-family: 'Dosis', serif; font-size: 26px; font-weight: bold; color: #A1A1A1; text-decoration:none; }
+		.table-layout {
+			display: table;
+			width: 100%;
+		}
+		.table-layout .table-cell {
+			display: table-cell;
+			border: 0px solid #ccc;
+		}
+		.fixed-width-250 {
+			width: 250px;
+		}
+
+		.btn_db {
+			width: 200px;
+			margin: 0 0 10px 0;
+			padding: 10px;
+			background-color: #F2F2F2;
+			color: #666;
+			cursor: pointer;
+			border-radius: 10px;
+			border: 2px solid #C9C9C9;
+			cursor: pointer;
+		}
+
+		.grid-container {
+			min-height: 600px;
+			margin: 10px 0 0 0;
+			padding: 0;
+			background-color: #FFF;
+			overflow: auto;
+		}
+		.db_table {
+			float: left;
+			width: 200px;
+			height: 100px;
+			margin: 0 0 10px 10px;
+			padding: 35px 0 0 0;
+			background-color: #F2F2F2;
+			color: #666;
+			border-radius: 10px;
+			border: 2px solid #C9C9C9;
+			text-align: center;
+			cursor: pointer;
+		}
+
+		.header {
+			width: 80%;
+			margin: auto;
+			border-bottom: 1px solid orange;
+			text-align: center;
+		}
+		.footer {
+			width: 80%;
+			margin: 10px auto;
+			border-top: 1px solid orange;
+			text-align: center;
+			font-size: 16px;
+		}
+
+		.panel-body { padding: 15px 15px 10px 15px; }
+		.panel > .panel-heading {
+			background-color: #E4E4E4;
+			color: #A1A1A1;
+			font-weight: bold;
+		}
+		.navigation {
+			position: fixed;
+			right: 10px;
+			margin: 10px 0px 0 0;
+			text-align: center;
+		}
+
+		.modal-wide .modal-dialog {
+			width: 95%;
+		}
+		.modal-content {
+			border-radius: 10px;
+		}
+		.modal-header, h4, .close {
+			background-color: #E4E4E4;
+			color: #999 !important;
+			text-align: center;
+			font-size: 24px;
+			border-radius: 10px 10px 0 0;
+		}
+		.modal-body .table_details {
+			background-color: #FFF; width: 30%; float: left;
+		}
+		.modal-body .table_schema {
+			background-color: #FFF; width: 70%; float: left;
+		}
+		.modal-body .table_schema .panel-body {
+			height: 249px; overflow: auto;
+		}
+		.modal-body .table_records {
+			background-color: #FFF; width: 100%; clear: both;
+		}
+		.modal-body .table_records .panel-body {
+			height: 300px; overflow: auto;
+		}
+		.modal-footer {
+			background-color: #f9f9f9;
+			border-radius: 0 0 10px 10px;
+		}
+
+		.table-striped, .table-bordered, .table-hover, .table-condensed {
+			font-size: 12px;
+		}
+	</style>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$.getJSON(
+				"{{ asset('bundles/nunomysqlinventory2/ajax/mydata.php') }}",
+				{ action : "getDBs" },
+				function(data) {
+					// alert(JSON.stringify(data));
+
+					// Display existing DBs as clickable buttons 
+					$.each(data, function(index) {
+						if (data[index].Database != 'information_schema' && data[index].Database != 'performance_schema' && data[index].Database != 'mysql')
+							$("#db_results").append("<div id='" + data[index].Database + "' class='btn_db'>" + data[index].Database + "</div>");
+					});
+
+					// DB buttons mouseenter/mouseleave/click
+					$('.btn_db').on({
+						mouseenter: mouseEnter,
+						mouseleave: mouseLeave
+					});
+
+					function mouseEnter() {
+						$(this).css({'background-color' : '#E4E4E4', 'color' : '#999'});
+					}
+
+					function mouseLeave() {
+						$(this).css({'background-color' : '#F2F2F2', 'color' : '#666'});
+					}
+
+					$('.btn_db').click(function() {
+						$(this).css({'background-color' : '#8B0000', 'color' : '#F2F2F2', 'cursor' : 'auto'});
+						$('.btn_db').not(this).css({'background-color' : '#F2F2F2', 'color' : '#666', 'cursor' : 'pointer'});
+						$(this).off('mouseenter mouseleave');
+						$('.btn_db').not(this).on({
+							mouseenter: mouseEnter,
+							mouseleave: mouseLeave
+						});
+					});
+				}
+			);
+
+			$('body').on('click', '.btn_db', function() {
+				var currDB = $(this).attr("id");
+				var col_name = "Tables_in_" + currDB;
+
+				$.getJSON(
+					"{{ asset('bundles/nunomysqlinventory2/ajax/mydata.php') }}",
+					{ action : "getTables", db : encodeURI(currDB) },
+					function(data) {
+						// alert(JSON.stringify(data));
+
+						// Display tables for given database
+						$("#grid-container").empty();
+						$.each(data, function(index) {
+							if (this[col_name].length > 20)
+								var currTableName = this[col_name].substring(0, 20) + " (...)";
+							else
+								var currTableName = this[col_name];
+
+							var tableOutput = "";
+							
+							tableOutput += "<div id='" + currDB + "^" + this[col_name] + "' class='db_table' data-toggle='modal' data-target='#myModal1'>";
+							tableOutput += currTableName;
+							tableOutput += "";
+							tableOutput += "";
+							tableOutput += "</div>";
+
+							$("#grid-container").append(tableOutput);
+						});
+
+						// Table buttons mouseenter/mouseleave/click
+						$('.db_table').on({
+							mouseenter: mouseEnter,
+							mouseleave: mouseLeave
+						});
+
+						function mouseEnter() {
+							$(this).css({'background-color' : '#E4E4E4', 'color' : '#999'});
+						}
+
+						function mouseLeave() {
+							$(this).css({'background-color' : '#F2F2F2', 'color' : '#666'});
+						}
+					}
+				);
+			});
+
+			$('body').on('click', '.db_table', function() {
+				var currDB = $(this).attr("id").split("^")[0];
+				var currTable = $(this).attr("id").split("^")[1];
+
+				$(".modal-title").html("Database: '" + currDB + "'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Table: '" + currTable + "'");
+
+				$.getJSON(
+					"{{ asset('bundles/nunomysqlinventory2/ajax/mydata.php') }}",
+					{ action : "getTableDefinition", db : encodeURI(currDB), table : encodeURI(currTable) },
+					function(data) {
+						// alert(JSON.stringify(data));
+
+						total_recs = data[0].total_recs;
+						var tabledetailsOutput = "";
+						var tabledschemaOutput = "<table class='table table-striped'>";
+						tabledschemaOutput += "<thead><tr><th>Field</th><th>Type</th><th>Null</th><th>Key</th><th>Default</th><th>Extra</th></tr></thead><tbody>";
+						var tablerecordsOutput = "<table class='table table-striped table-bordered table-hover table-condensed'>";
+						var isTableHeader = 0;
+
+						$.each(data, function(index, datanode) {
+							if (index == 1) {
+								tabledetailsOutput += "<table class='table table-hover'>";
+								tabledetailsOutput += "<tr><td><strong>Table name </strong></td><td>" + data[index].Name + "</td></tr>";
+								tabledetailsOutput += "<tr><td><strong>No. of records </strong></td><td>" + total_recs + "</td></tr>";
+								tabledetailsOutput += "<tr><td><strong>Create time </strong></td><td>" + data[index].Create_time + "</td></tr>";
+								tabledetailsOutput += "<tr><td><strong>Update time </strong></td><td>" + data[index].Update_time + "</td></tr>";
+								tabledetailsOutput += "<tr><td><strong>Engine </strong></td><td>" + data[index].Engine + "</td></tr>";
+								tabledetailsOutput += "<tr><td><strong>Collation </strong></td><td>" + data[index].Collation + "</td></tr>";
+								tabledetailsOutput += "</table>";
+							} else if (index > 2 && index < parseInt(data[2].column_count) + 3) {
+								tabledschemaOutput += "<tr>";
+								tabledschemaOutput += "<td>" + data[index].Field + "</td>";
+								tabledschemaOutput += "<td>" + data[index].Type + "</td>";
+								tabledschemaOutput += "<td>" + data[index].Null + "</td>";
+								tabledschemaOutput += "<td>" + data[index].Key + "</td>";
+								tabledschemaOutput += "<td>" + data[index].Default + "</td>";
+								tabledschemaOutput += "<td>" + data[index].Extra + "</td>";
+								tabledschemaOutput += "</tr>";
+							} else if (index >= parseInt(data[2].column_count) + 3) {
+								if (isTableHeader == 0) {
+									tablerecordsOutput += "<thead><tr>";
+
+									$.each(datanode, function(index, datanode) {
+										tablerecordsOutput += "<th>" + index + "</th>";
+									});
+
+									tablerecordsOutput += "</tr><tr></thead><tbody>";
+
+									$.each(datanode, function(index, datanode) {
+										tablerecordsOutput += "<td>" + htmlEntities(datanode) + "</td>";
+									});
+
+									tablerecordsOutput += "</tr>";
+
+									isTableHeader = 1;
+								} else {
+									tablerecordsOutput += "<tr>";
+
+									$.each(datanode, function(index, datanode) {
+										tablerecordsOutput += "<td>" + htmlEntities(datanode) + "</td>";
+									});
+
+									tablerecordsOutput += "</tr>";
+								}
+							}
+						});
+
+						tabledschemaOutput += "</tbody></table>";
+
+						$(".modal-body .table_details .panel-body").html(tabledetailsOutput);
+						$(".modal-body .table_schema .panel-body").html(tabledschemaOutput);
+						$(".modal-body .table_records .panel-body").html(tablerecordsOutput);
+					}
+				);
+			});
+		});
+
+		function htmlEntities(str) {
+			return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g,'&gt;').replace(/"/g, '&quot;');
+		}
+	</script>
+	<link href='http://fonts.googleapis.com/css?family=Audiowide' rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Dosis' rel='stylesheet' type='text/css'>
+</head>
+<body>
+
+<header>
+	<div class="header">
+		<h1 id="audiowide"><a href="http://mysqlinventory2/">MySQL Inventory 2</a></h1>
+		<p id="dosis"><a href="http://mysqlinventory2/">Manage MySQL server. With attitude and style.</a></p>
+	</div>
+</header>
+
+<div class="table-layout">
+	<div class="table-cell">
+		<div id="grid-container" class="grid-container"></div>
+	</div>
+	<div class="table-cell fixed-width-250">
+		<div class="panel panel-default navigation" style="">
+			<div class="panel-heading">Databases</div>
+			<div class="panel-body">
+				<div id="db_results"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal window -->
+<div class="modal fade modal-wide" id="myModal1" role="dialog">
+	<div class="modal-dialog">
+		<!-- Modal content-->
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+				<h4 class="modal-title">Modal Header</h4>
+			</div>
+			<div class="modal-body">
+				<div class="table_details" style="">
+					<div class="panel panel-default" style="margin: 0 5px 10px 0;">
+						<div class="panel-heading">Table Details</div>
+						<div class="panel-body"></div>
+					</div>
+				</div>
+				<div class="table_schema" style="">
+					<div class="panel panel-default" style="margin: 0 0 10px 5px;">
+						<div class="panel-heading">Table Schema</div>
+						<div class="panel-body"></div>
+					</div>
+				</div>
+				<div class="table_records" style="">
+					<div class="panel panel-default">
+						<div class="panel-heading">Table Records</div>
+						<div class="panel-body"></div>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<footer>
+	<div id="dosis" class="footer" style="font-size: 16px;">
+		Copyright © 2016 by Nuno Oliveira
+	</div>
+</footer>
+
+</body>
+</html>
